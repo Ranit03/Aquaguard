@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Data Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .recommendation-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .recommendation-list li {
+            background-color: #e0f7fa;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .accuracy {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .peak-hour-range {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sensor Data Analysis</h1>
+        <h2>Model Evaluation</h2>
+        <p class="accuracy"><strong>Peak Hour Accuracy:</strong> {{ peak_hour_accuracy }}%</p>
+        <p class="accuracy"><strong>Leak Detection Accuracy:</strong> {{ leak_detection_accuracy }}%</p>
+
+        <h2>Maintenance Recommendations</h2>
+        <ul class="recommendation-list">
+            {% for recommendation in maintenance_recommendations %}
+                <li>{{ recommendation }}</li>
+            {% endfor %}
+        </ul>
+
+        <h2>Top 3 Peak Hour Ranges</h2>
+        <ul class="peak-hour-range">
+            {% for range in peak_hour_ranges %}
+                <li>{{ range }}</li>
+            {% endfor %}
+        </ul>
+
+        <h2>Peak Hour Recommendations</h2>
+        <ul class="recommendation-list">
+            {% for index, row in peak_hour_recommendations.iterrows() %}
+                <li>{{ row['Time'] }}: Flow Difference: {{ row['Flow_Difference'] }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

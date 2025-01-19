@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Viewer</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        #loading {
+            font-size: 1.2em;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSV Data Viewer</h1>
+    <div id="loading">Loading...</div>
+
+    <div id="sensor-data-1">
+        <h2>Sensor Data 1</h2>
+        <table id="table1"></table>
+    </div>
+
+    <div id="sensor-data-2">
+        <h2>Sensor Data 2</h2>
+        <table id="table2"></table>
+    </div>
+
+    <script>
+        // Function to parse CSV and generate HTML table
+        function parseCSVToTable(csv, tableId) {
+            const rows = csv.split('\n');
+            let html = "<tr>";
+            const headers = rows[0].split(',');
+            // Creating header row
+            headers.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += "</tr>";
+
+            // Creating table rows
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].trim() === "") continue; // Skip empty lines
+                const cells = rows[i].split(',');
+                html += "<tr>";
+                cells.forEach(cell => {
+                    html += `<td>${cell}</td>`;
+                });
+                html += "</tr>";
+            }
+
+            document.getElementById(tableId).innerHTML = html;
+        }
+
+        // Function to load CSV file
+        function loadCSV(fileName, tableId) {
+            fetch(fileName)
+                .then(response => response.text())
+                .then(data => {
+                    parseCSVToTable(data, tableId);
+                    document.getElementById('loading').style.display = 'none'; // Hide loading text
+                })
+                .catch(error => {
+                    console.error("Error loading CSV:", error);
+                    document.getElementById('loading').innerText = "Failed to load CSV files.";
+                });
+        }
+
+        // Load both CSV files
+        loadCSV('sensor_data_1.csv', 'table1');
+        loadCSV('sensor_data_2.csv', 'table2');
+    </script>
+</body>
+</html>

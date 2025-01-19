@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Water Management Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>IoT Water Management Dashboard</h1>
+    
+    <canvas id="pressureChart" width="600" height="300"></canvas>
+    <canvas id="flowChart" width="600" height="300"></canvas>
+    <canvas id="temperatureChart1" width="600" height="200"></canvas>
+    <canvas id="temperatureChart2" width="600" height="200"></canvas>
+
+    <script>
+        const socket = io();
+
+        // Initialize charts
+        const pressureChartCtx = document.getElementById('pressureChart').getContext('2d');
+        const flowChartCtx = document.getElementById('flowChart').getContext('2d');
+        const temperatureChart1Ctx = document.getElementById('temperatureChart1').getContext('2d');
+        const temperatureChart2Ctx = document.getElementById('temperatureChart2').getContext('2d');
+
+        const pressureChart = new Chart(pressureChartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Pressure Sensor 1 (Bar)',
+                        data: [],
+                        borderColor: 'green',
+                        borderWidth: 2,
+                        pointBackgroundColor: [],
+                        pointRadius: []
+                    },
+                    {
+                        label: 'Pressure Sensor 2 (Bar)',
+                        data: [],
+                        borderColor: 'red',
+                        borderWidth: 2,
+                        pointBackgroundColor: [],
+                        pointRadius: []
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    }
+                }
+            }
+        });
+
+        const flowChart = new Chart(flowChartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Flow Rate Sensor 1 (L/s)',
+                        data: [],
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        pointBackgroundColor: [],
+                        pointRadius: []
+                    },
+                    {
+                        label: 'Flow Rate Sensor 2 (L/s)',
+                        data: [],
+                        borderColor: 'orange',
+                        borderWidth: 2,
+                        pointBackgroundColor: [],
+                        pointRadius: []
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    }
+                }
+            }
+        });
+
+        const temperatureChart1 = new Chart(temperatureChart1Ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Temperature Sensor 1 (°C)',
+                    data: [],
+                    backgroundColor: 'red',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    }
+                }
+            }
+        });
+
+        const temperatureChart2 = new Chart(temperatureChart2Ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Temperature Sensor 2 (°C)',
+                    data: [],
+                    backgroundColor: 'blue',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Update charts with real-time data
+        socket.on('sensor_data', (data) => {
+            const { timestamp, flow, pressure, temperature, flow_leakage, pressure_leakage } = data;
+
+            // Handle pressure chart
+            if (pressureChart.data.labels.length > 20) {
+                pressureChart.data.labels.shift();
+                pressureChart.data.datasets[0].data.shift();
+                pressureChart.data.datasets[1].data.shift();
+                pressureChart.data.datasets[0].pointBackgroundColor.shift();
+                pressureChart.data.datasets[1].pointBackgroundColor.shift();
+                pressureChart.data.datasets[0].pointRadius.shift();
+                pressureChart.data.datasets[1].pointRadius.shift();
+            }
+
+            pressureChart.data.labels.push(timestamp);
+            pressureChart.data.datasets[0].data.push(pressure[0]);
+            pressureChart.data.datasets[1].data.push(pressure[1]);
+
+            // Check for leakage in pressure and mark accordingly
+            let pressureLeakage1 = pressure[0] < 2 || pressure[0] > 4;
+            let pressureLeakage2 = pressure[1] < 2 || pressure[1] > 4;
+
+            pressureChart.data.datasets[0].pointBackgroundColor.push(pressureLeakage1 ? 'red' : 'green');
+            pressureChart.data.datasets[1].pointBackgroundColor.push(pressureLeakage2 ? 'red' : 'red');
+
+            pressureChart.data.datasets[0].pointRadius.push(pressureLeakage1 ? 6 : 3);
+            pressureChart.data.datasets[1].pointRadius.push(pressureLeakage2 ? 6 : 3);
+
+            pressureChart.update();
+
+            // Handle flow chart
+            if (flowChart.data.labels.length > 20) {
+                flowChart.data.labels.shift();
+                flowChart.data.datasets[0].data.shift();
+                flowChart.data.datasets[1].data.shift();
+                flowChart.data.datasets[0].pointBackgroundColor.shift();
+                flowChart.data.datasets[1].pointBackgroundColor.shift();
+                flowChart.data.datasets[0].pointRadius.shift();
+                flowChart.data.datasets[1].pointRadius.shift();
+            }
+
+            flowChart.data.labels.push(timestamp);
+            flowChart.data.datasets[0].data.push(flow[0]);
+            flowChart.data.datasets[1].data.push(flow[1]);
+
+            // Check for leakage in flow and mark accordingly
+            let flowLeakage1 = flow[0] < 8 || flow[0] > 18;
+            let flowLeakage2 = flow[1] < 8 || flow[1] > 18;
+
+            flowChart.data.datasets[0].pointBackgroundColor.push(flowLeakage1 ? 'red' : 'blue');
+            flowChart.data.datasets[1].pointBackgroundColor.push(flowLeakage2 ? 'red' : 'orange');
+
+            flowChart.data.datasets[0].pointRadius.push(flowLeakage1 ? 6 : 3);
+            flowChart.data.datasets[1].pointRadius.push(flowLeakage2 ? 6 : 3);
+
+            flowChart.update();
+
+            // Handle temperature chart for sensor 1
+            if (temperatureChart1.data.labels.length > 20) temperatureChart1.data.labels.shift();
+            if (temperatureChart1.data.datasets[0].data.length > 20) temperatureChart1.data.datasets[0].data.shift();
+            temperatureChart1.data.labels.push(timestamp);
+            temperatureChart1.data.datasets[0].data.push(temperature[0]);
+            temperatureChart1.update();
+
+            // Handle temperature chart for sensor 2
+            if (temperatureChart2.data.labels.length > 20) temperatureChart2.data.labels.shift();
+            if (temperatureChart2.data.datasets[0].data.length > 20) temperatureChart2.data.datasets[0].data.shift();
+            temperatureChart2.data.labels.push(timestamp);
+            temperatureChart2.data.datasets[0].data.push(temperature[1]);
+            temperatureChart2.update();
+        });
+    </script>
+</body>
+</html>
